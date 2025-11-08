@@ -49,8 +49,8 @@ return all of the sports facility
 ## /api/pressence (POST)
 **purpose:**
 send the user location to the server, and return the nearest facility around.
-increase the points of the user if he's within the `MAX_DISTANCE`
-inRange is true if the user is can obtain points
+increase the points of the user if he's within the `MAX_DISTANCE`.
+inRange is true if the user can obtain points
 
 **body:**
 ```json
