@@ -121,17 +121,13 @@ def getNearest(usr : UserLocation, user = Depends(auth.require_user)):
         else:
             result = nearest(data, usr.lng, usr.lat)
             inRange = result['dist_m'] <= MAX_DISTANCE
-
+            USER_CACHE[user['sub']] = { 'lng' : usr.lng, 'lat' : usr.lat, 'data' : result, 'inRange' : inRange, 'ts' : time() }
         if inRange:
             username = user['sub']
             up = int(connect.getUserInfo(cursor, "Points", username)["Points"].iloc[0]) + 1
             connect.updateData(cursor, "Points", up, username)
             print(f'{user['sub']} requested')
-            USER_CACHE[user['sub']] = { 'lng' : usr.lng, 
-                                        'lat' : usr.lat, 
-                                        'data' : result, 
-                                        'inRange' : inRange,
-                                        'ts' : time() }
+    
         return { 'status' : "success", 'inRange' : inRange, 'data' : result }
     except:
         raise HTTPException(status_code = 500, detail = "Internal server error")
