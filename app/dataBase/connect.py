@@ -24,7 +24,7 @@ def createTable(cursor, tableName, **kwargs):
 
 def getinfo(cursor, tableName, Username):
     #取得tableName的所有資料
-    cursor.execute(f"SELECT * FROM {tableName} WHERE Username = '{Username}'")
+    cursor.execute("SELECT * FROM %s WHERE Username = %s", (tableName, Username))
     rows = cursor.fetchall()
     columns = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(rows, columns=columns)
@@ -39,8 +39,7 @@ def getAllInfo(cursor, tableName):
     return df
 
 def updateData(cursor, tableName, newValues, Username):
-    sql = f"UPDATE {tableName} SET Points = '{newValues}' WHERE Username = '{Username}'"
-    cursor.execute(sql)
+    cursor.execute("UPDATE %s SET Points = %s WHERE Username = %s", (tableName, newValues, Username))
     cursor.connection.commit()  # 如果你只有 cursor，也可以這樣 commit
 
 def getColumnsName(cursor, tableName):
