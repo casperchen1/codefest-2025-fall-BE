@@ -187,7 +187,8 @@ def purchase(order : PurchaseModel, user_points = Depends(getUserPointsData)):
 def getAllScores():
     cursor = connect.connectToDB()
     try:
-        results = connect.getAllUserInfo(cursor, 'Points')
+        cursor.execute("SELECT * FROM Points ORDER BY Points DESC")
+        results = cursor.fetchall()
         return { 'data' : results.to_dict(orient="records")}
     except:
         raise HTTPException(status_code = 500, detail = 'Internal Server Error')
