@@ -1,10 +1,9 @@
-from fastapi import FastAPI, responses, HTTPException
+from fastapi import FastAPI, Depends, HTTPException
 import numpy as np
 from pydantic import BaseModel
 import pandas as pd
 from dotenv import load_dotenv
-import os, jwt, uuid
-from datetime import datetime, timedelta, timezone
+from app.auth import auth
 
 app = FastAPI()
 load_dotenv()
@@ -63,7 +62,6 @@ def getStatus():
 def getData():
     return { 'data' : data }
 
-
 @app.post('/api/pressence')
 def getNearest(usr : UserLocation):
     try:
@@ -73,37 +71,15 @@ def getNearest(usr : UserLocation):
     
     return { "status" : "success", 'data' : result }
 
-#Authentication
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret")  
-JWT_ALG = "HS256"                                   
-ACCESS_TTL_MIN = 15
-
-class UserInfo(BaseModel):
-    username : str
-    password : str
-
-def verify_user(username : str, password : str): 
-    #TODO verify usernname with password hash
-    if username == os.getenv("USERNAME") and password == os.getenv("USER_PASSWORD"):
-        return "admin"
-    return None
-
-def make_access_token(sub : str):
-    now = datetime.now(timezone.utc)
-    exp = now + timedelta(minutes = ACCESS_TTL_MIN)
-    payload = {
-        "sub" : sub,
-        "jti": str(uuid.uuid4()),
-        "iat": int(now.timestamp()),
-        "exp": int(exp.timestamp()),
-    }
-    token = jwt.encode(payload, os.getenv("JWT_SECRET"), algorithm = JWT_ALG)
-    return { "access_token" : token, "token_type" : "Bearer", "expires_in": ACCESS_TTL_MIN * 60 }
+@app.get('/api/points/me')
+def getPoints(user = Depends(auth.require_user)):
+    #TODO find the points of user via db[user.sub]
+    return { 'user' : user }
 
 @app.post('/auth/login')
-def login(req : UserInfo):
-    user_id = verify_user(req.username, req.password)
+def login(req : auth.UserInfo):
+    user_id = auth.verify_user(req.username, req.password)
     if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    return make_access_token(sub = user_id)
+        raise HTTPException(status_code = 401, detail = "Invalid credentials")
+    return auth.make_access_token(sub = user_id)
 
