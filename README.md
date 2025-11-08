@@ -2,7 +2,7 @@
 The backend server for codefest-fall.
 
 # APIs
-## /api/health (GET)
+- /api/health (GET)
 purpose:
 check the status of the server
 
