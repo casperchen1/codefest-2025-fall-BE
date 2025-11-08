@@ -7,6 +7,8 @@ import pandas as pd
 from dotenv import load_dotenv
 from app.dataBase import connect
 from app.auth import auth
+from time import time
+import asyncio
 
 app = FastAPI()
 load_dotenv()
@@ -78,9 +80,39 @@ def getStatus():
 def getData():
     return { 'data' : data.to_dict(orient="records") }
 
-MAX_DISTANCE = 25
+MAX_DISTANCE = 9999999
+MAX_CACHE_RANGE = 20
+USER_CACHE = {} #{ 'user_id' : { 'lng' :, 'lat' :, 'data' :, 'ts' :, 'inRange': } }
+
+async def clean_cache():
+    while True:
+        now = time()
+        expired = [uid for uid, info in USER_CACHE.items() if now - info["ts"] > 60]
+        for uid in expired:
+            print(f'cached cleaned for {uid}')
+            del USER_CACHE[uid]
+        await asyncio.sleep(60)
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(clean_cache())
+
+def use_cache_if_near(user_id, lng, lat):
+    last = USER_CACHE.get(user_id)
+    if not last:
+        return None
+    moved = haversine(lng, lat, last['lng'], last['lat'])
+    if moved > MAX_CACHE_RANGE:
+        return None
+    return last
+
 @app.post('/api/pressence')
 def getNearest(usr : UserLocation, user = Depends(auth.require_user)):
+    last = USER_CACHE.get(user['sub'])
+    if last:
+        print("cache success")
+        return { "status" : "success", 'inRange' : last['inRange'],  'data' : last['data'] }
+
     cursor = connect.connectToDB()
     try:
         result = nearest(data, usr.lng, usr.lat)
@@ -90,6 +122,11 @@ def getNearest(usr : UserLocation, user = Depends(auth.require_user)):
             up = int(connect.getUserInfo(cursor, "Points", username)["Points"].iloc[0]) + 1
             connect.updateData(cursor, "Points", up, username)
             print(f'{user['sub']} requested')
+        USER_CACHE[user['sub']] = { 'lng' : usr.lng, 
+                                    'lat' : usr.lat, 
+                                    'data' : result, 
+                                    'inRange' : inRange,
+                                    'ts' : time()}
         return { "status" : "success", 'inRange' : inRange,  'data' : result }
     except:
         raise HTTPException(status_code = 500, detail = "Internal server error")
