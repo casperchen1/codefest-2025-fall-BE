@@ -4,7 +4,6 @@ import numpy as np
 from pydantic import BaseModel
 import pandas as pd
 from dotenv import load_dotenv
-import os
 from app.dataBase import connect
 from app.auth import auth
 
@@ -14,7 +13,7 @@ load_dotenv()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],        # narrow this in prod
-    allow_credentials=True,
+    allow_credentials = True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -140,9 +139,10 @@ def signUp(info : auth.UserInfo):
         if check.empty:
             connect.insertUser(cursor, info.username, info.password)
             return { 'message' : 'Created successfully' }
-        else:
-            raise HTTPException(status_code = 400, detail = "Username already exists")
-    except:
+        raise HTTPException(status_code = 400, detail = "Username already exists")
+    except HTTPException as e:
+        if e.status_code == 400:
+            raise e
         raise HTTPException(status_code = 500, detail = "Internal server error")
     finally:
         cursor.close()
