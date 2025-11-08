@@ -108,26 +108,28 @@ def use_cache_if_near(user_id, lng, lat):
 
 @app.post('/api/pressence')
 def getNearest(usr : UserLocation, user = Depends(auth.require_user)):
-    last = USER_CACHE.get(user['sub'])
-    if last:
-        print("cache success")
-        return { "status" : "success", 'inRange' : last['inRange'],  'data' : last['data'] }
-
     cursor = connect.connectToDB()
+
+    inRange = False
     try:
-        result = nearest(data, usr.lng, usr.lat)
-        inRange = result['dist_m'] <= MAX_DISTANCE
+        last = USER_CACHE.get(user['sub'])
+        if last:
+            print("cache success")
+            inRange = last['inRange']
+        else:
+            result = nearest(data, usr.lng, usr.lat)
+            inRange = result['dist_m'] <= MAX_DISTANCE
+
         if inRange:
             username = user['sub']
             up = int(connect.getUserInfo(cursor, "Points", username)["Points"].iloc[0]) + 1
             connect.updateData(cursor, "Points", up, username)
             print(f'{user['sub']} requested')
-        USER_CACHE[user['sub']] = { 'lng' : usr.lng, 
-                                    'lat' : usr.lat, 
-                                    'data' : result, 
-                                    'inRange' : inRange,
-                                    'ts' : time()}
-        return { "status" : "success", 'inRange' : inRange,  'data' : result }
+            USER_CACHE[user['sub']] = { 'lng' : usr.lng, 
+                                        'lat' : usr.lat, 
+                                        'data' : result, 
+                                        'inRange' : inRange,
+                                        'ts' : time() }
     except:
         raise HTTPException(status_code = 500, detail = "Internal server error")
     finally:
