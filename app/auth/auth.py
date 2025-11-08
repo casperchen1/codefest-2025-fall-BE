@@ -16,11 +16,16 @@ class UserInfo(BaseModel):
     password : str
     
 def verify_user(username : str, password : str): 
-    verify = connect.getinfo(connect.connectToDB(), "UserInfo", username)["Password"].iloc[0]
-
-    if verify == password:
-        return username
-    return None
+    cursor = connect.connectToDB()
+    try:
+        verify = connect.getinfo(cursor, "UserInfo", username)["Password"].iloc[0]
+        if verify == password:
+            return username
+        return None
+    except:
+        raise HTTPException(status_code = 500, detail = "Internal server error")
+    finally:
+        cursor.close()
 
 def require_user(creds : HTTPAuthorizationCredentials = Depends(security)):
     token = creds.credentials

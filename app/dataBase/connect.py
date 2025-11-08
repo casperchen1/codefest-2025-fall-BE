@@ -9,6 +9,7 @@ load_dotenv()
 PASSWORD = os.getenv("DB_PASSWORD")
 HOSTNAME = os.getenv("DB_HOST")
 
+
 def deleteTable(cursor, tableName):
     #刪除表
     cursor.execute(f"DROP TABLE IF EXISTS {tableName}")
@@ -41,6 +42,7 @@ def updateData(cursor, tableName, newValues, Username):
     sql = f"UPDATE {tableName} SET Points = '{newValues}' WHERE Username = '{Username}'"
     cursor.execute(sql)
     cursor.connection.commit()  # 如果你只有 cursor，也可以這樣 commit
+
 def getColumnsName(cursor, tableName):
     #取得tableName的所有欄位名稱及型態
     columns = []
@@ -116,4 +118,15 @@ try:
   getinfo(cursor, "sports_places")
 finally:
     cursor.connection.close()
+'''
+
+'''
+cursor = connectToDB()
+cursor.execute("SHOW PROCESSLIST;")
+rows = cursor.fetchall()
+for row in cursor.fetchall():
+    if row["Command"] == "Sleep":
+        cursor.execute(f"KILL {row['Id']}")
+print(rows)
+cursor.close()
 '''
