@@ -21,7 +21,15 @@ def createTable(cursor, tableName, **kwargs):
     cursor.execute(sql)
     print(f"Table '{tableName}' created successfully.")
 
-def getinfo(cursor, tableName):
+def getinfo(cursor, tableName, Username):
+    #取得tableName的所有資料
+    cursor.execute(f"SELECT * FROM {tableName} WHERE Username = '{Username}'")
+    rows = cursor.fetchall()
+    columns = [desc[0] for desc in cursor.description]
+    df = pd.DataFrame(rows, columns=columns)
+    return df
+
+def getAllInfo(cursor, tableName):
     #取得tableName的所有資料
     cursor.execute(f"SELECT * FROM {tableName}")
     rows = cursor.fetchall()
@@ -56,7 +64,7 @@ def insertDataFromCSV(cursor, tableName, csvFilePath):
 
 def insertUser(cursor, username, password):
     #插入使用者帳號密碼
-    sql = "INSERT INTO points (Username, Points) VALUES (%s, %s)"
+    sql = "INSERT INTO Points (Username, Points) VALUES (%s, %s)"
     cursor.execute(sql, (username, 0))
     sql = "INSERT INTO UserInfo (Username, Password) VALUES (%s, %s)"
     cursor.execute(sql, (username, password))
@@ -80,10 +88,9 @@ def connectToDB():
     )
     cursor = connection.cursor()
     return cursor
-
+'''
 try:
   cursor = connectToDB()
-  '''
   #deleteTable(cursor, "UserInfo")
   createTable(cursor, "sports_places" ,
   id    =    "INT AUTO_INCREMENT PRIMARY KEY",
@@ -97,7 +104,7 @@ try:
   Username = "VARCHAR(50)",
   Password = "VARCHAR(50)",
   )
-  '''
+  
   
   #column = getColumnsName(cursor, "UserInfo")
   insertUser(cursor, "testuser", "testpassword")
@@ -109,3 +116,4 @@ try:
   getinfo(cursor, "sports_places")
 finally:
     cursor.connection.close()
+'''
