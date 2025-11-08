@@ -1,11 +1,9 @@
-from fastapi import FastAPI, responses, HTTPException
+from fastapi import FastAPI, Depends, HTTPException
 import numpy as np
 from pydantic import BaseModel
 import pandas as pd
 from dotenv import load_dotenv
-import os, jwt, uuid
-from datetime import datetime, timedelta, timezone
-from app.dataBase import connect
+from app.auth import auth
 
 app = FastAPI()
 load_dotenv()
@@ -19,34 +17,46 @@ class UserLocation(BaseModel):
 
 def updateData():
     #TODO will replaced by db search
-    #updated = pd.read_csv('../assets/sports_facility.csv')
-    cursor = connect.connectToDB()
-    updated = connect.getinfo(cursor, "sports_places")
+    updated = pd.read_csv('../assets/sports_facility.csv')
     return updated
 
-def haversine(lat1, lon1, lat2, lon2):
-    R = 6371000.0
-    p1, p2 = np.radians(lat1), np.radians(lat2)
-    dphi = np.radians(lat2 - lat1)
-    dlmb = np.radians(lon2 - lon1)
-    a = np.sin(dphi/2)**2 + np.cos(p1)*np.cos(p2)*np.sin(dlmb/2)**2
-    return 2*R*np.arcsin(np.sqrt(a)) 
+def haversine(lng1, lat1, lng2, lat2):
+    R = 6371000.0  # meters
 
-def nearest(facilities_df, user_lat, user_lng):
-    d = haversine(user_lat, user_lng, facilities_df["緯度"], facilities_df["經度"])
+    # convert inputs to numpy arrays for broadcasting
+    lng1 = np.asarray(lng1, dtype=float)
+    lat1 = np.asarray(lat1, dtype=float)
+    lng2 = np.asarray(lng2, dtype=float)
+    lat2 = np.asarray(lat2, dtype=float)
+
+    # convert all to radians
+    phi1 = np.radians(lat1)
+    phi2 = np.radians(lat2)
+    dphi = np.radians(lat2 - lat1)
+    dlmb = np.radians(lng2 - lng1)
+
+    a = np.sin(dphi / 2.0)**2 + np.cos(phi1) * np.cos(phi2) * np.sin(dlmb / 2.0)**2
+    c = 2 * np.arcsin(np.sqrt(a))
+    return R * c
+
+def nearest(facilities_df, user_lng, user_lat):
+    lngs = pd.to_numeric(facilities_df["經度"]).to_numpy()
+    lats = pd.to_numeric(facilities_df["緯度"]).to_numpy()
+
+    d = haversine(user_lng, user_lat, lngs, lats)
     i = int(np.argmin(d))
     row = facilities_df.iloc[i]
     return {"name": row["場地"], 
             "type": row["類別"], 
             "lng" : row["經度"], 
             "lat" : row["緯度"] , 
-            "dist_m": float(d.iloc[i])}
+            "dist_m": float(d[i])}
 
 data = updateData()
 
 @app.get('/api/health')
 def getStatus():
-    return { 'status' : 'operating', 'test' : os.getenv("USERNAME") }
+    return { 'status' : 'operating' }
 
 @app.get('/api/dataset')
 def getData():
@@ -61,37 +71,15 @@ def getNearest(usr : UserLocation):
     
     return { "status" : "success", 'data' : result }
 
-
-#Authentication
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret")  
-JWT_ALG = "HS256"                                   
-ACCESS_TTL_MIN = 15
-
-class UserInfo(BaseModel):
-    username : str
-    password : str
-
-def verify_user(username : str, password : str): 
-    #TODO verify usernname with password hash
-    if username == os.getenv("USERNAME") and password == os.getenv("USER_PASSWORD"):
-        return "admin"
-    return None
-
-def make_access_token(sub : str):
-    now = datetime.now(timezone.utc)
-    exp = now + timedelta(minutes = ACCESS_TTL_MIN)
-    payload = {
-        "sub" : sub,
-        "jti": str(uuid.uuid4()),
-        "iat": int(now.timestamp()),
-        "exp": int(exp.timestamp()),
-    }
-    token = jwt.encode(payload, os.getenv("JWT_SECRET"), algorithm = JWT_ALG)
-    return { "access_token" : token, "token_type" : "Bearer", "expires_in": ACCESS_TTL_MIN * 60 }
+@app.get('/api/points/me')
+def getPoints(user = Depends(auth.require_user)):
+    #TODO find the points of user via db[user.sub]
+    return { 'user' : user }
 
 @app.post('/auth/login')
-def login(req : UserInfo):
-    user_id = verify_user(req.username, req.password)
+def login(req : auth.UserInfo):
+    user_id = auth.verify_user(req.username, req.password)
     if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    return make_access_token(sub = user_id)
+        raise HTTPException(status_code = 401, detail = "Invalid credentials")
+    return auth.make_access_token(sub = user_id)
+
