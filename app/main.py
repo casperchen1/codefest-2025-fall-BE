@@ -27,8 +27,6 @@ class UserLocation(BaseModel):
     timestamp : str
 
 def updateData():
-    #TODO will replaced by db search
-    #updated = pd.read_csv('../assets/sports_facility.csv')
     cursor = connect.connectToDB()
     updated = connect.getinfo(cursor, "sports_places")
     return updated
@@ -81,32 +79,38 @@ def getNearest(usr : UserLocation, user = Depends(auth.require_user)):
     try:
         result = nearest(data, usr.lng, usr.lat)
         if result['dist_m'] <= MAX_DISTANCE:
-            #TODO add points to user.sub
-            print("points added")
+            print(f'{user['sub']} requested')
     except:
         return { 'status' : "Internal server error"}
     
     return { "status" : "success", 'data' : result }
+
+def getUserPointsData(user = Depends(auth.require_user)):
+    #TODO find the points of user via db[user.sub]
+    return { 'user' : user['sub'], 'points' : 0 }
     
 @app.get('/api/points/me')
-def getPoints(user = Depends(auth.require_user)):
-    #TODO find the points of user via db[user.sub]
-    return { 'user' : user }
+def getPoints(user_points = Depends(getUserPointsData)):
+    return { 'user' : user_points['user'], 'points' : user_points['points'] }
 
 class PurchaseModel(BaseModel):
     item_id : str
+    price : int
     count : int
     timestamp : str
 
-'''
 @app.post('/api/purchase')
-def purchase(order : PurchaseModel, user = Depends(auth.require_user)):
-'''
+def purchase(order : PurchaseModel, user_points = Depends(getUserPointsData)):
+    if user_points['points'] >= order['price'] * order['count']:
+        #TODO handle purchase
+        return { 'message' : 'Purchase success' }
+    return { 'message' : 'Not enough points' }
 
 @app.post('/auth/login')
 def login(req : auth.UserInfo):
     user_id = auth.verify_user(req.username, req.password)
     if not user_id:
         raise HTTPException(status_code = 401, detail = "Invalid credentials")
+    print(f'{user_id} has logged in')
     return auth.make_access_token(sub = user_id)
 

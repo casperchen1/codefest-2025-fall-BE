@@ -18,7 +18,7 @@ class UserInfo(BaseModel):
 def verify_user(username : str, password : str): 
     #TODO verify usernname with password hash
     if username == os.getenv("USERNAME") and password == os.getenv("USER_PASSWORD"):
-        return "admin"
+        return os.getenv("USERNAME")
     return None
 
 def require_user(creds : HTTPAuthorizationCredentials = Depends(security)):
