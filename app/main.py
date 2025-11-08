@@ -9,6 +9,7 @@ from app.dataBase import connect
 from app.auth import auth
 from time import time
 import asyncio
+import os
 
 app = FastAPI()
 load_dotenv()
