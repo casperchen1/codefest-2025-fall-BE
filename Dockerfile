@@ -38,7 +38,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --find-links=/wheels -r requirements.txt
 
 # Copy source
-COPY app ./app
+COPY . .
+COPY assets/ /assets/
 
 USER appuser
 EXPOSE 8000
