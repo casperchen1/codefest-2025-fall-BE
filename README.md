@@ -111,7 +111,9 @@ Autherization: true
 
 response example:
 ```json
-{ 'message' : 'Purchase success' }
+{
+    'message' : 'Purchase success'
+}
 ```
 
 ## /auth/signup (POST)
@@ -130,7 +132,9 @@ Autherization: false
 
 response example:
 ```json
-{ 'message' : 'Created successfully' }
+{
+    'message' : 'Created successfully'
+}
 ```
 
 ## /auth/login (POST)
