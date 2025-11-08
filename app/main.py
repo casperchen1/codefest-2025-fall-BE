@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware import CORSMiddleware
 import numpy as np
 from pydantic import BaseModel
 import pandas as pd
@@ -9,6 +10,14 @@ from app.auth import auth
 
 app = FastAPI()
 load_dotenv()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],        # narrow this in prod
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 #API
 class UserLocation(BaseModel):
@@ -66,10 +75,14 @@ def getStatus():
 def getData():
      return { 'data' : data.to_dict(orient="records") }
 
+MAX_DISTANCE = 25
 @app.post('/api/pressence')
-def getNearest(usr : UserLocation):
+def getNearest(usr : UserLocation, user = Depends(auth.require_user)):
     try:
         result = nearest(data, usr.lng, usr.lat)
+        if result['dist_m'] <= MAX_DISTANCE:
+            #TODO add points to user.sub
+            print("points added")
     except:
         return { 'status' : "Internal server error"}
     
