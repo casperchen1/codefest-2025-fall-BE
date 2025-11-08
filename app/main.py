@@ -146,6 +146,15 @@ def purchase(order : PurchaseModel, user_points = Depends(getUserPointsData)):
     finally:
         cursor.close()
 
+@app.get('/api/getallscores')
+def getAllScores():
+    cursor = connect.connectToDB()
+    try:
+        results = connect.getAllUserInfo(cursor, 'Points')
+        return { 'data' : results.to_dict(orient="records")}
+    except:
+        raise HTTPException(status_code = 500, detail = 'Internal Server Error')
+
 @app.post('/auth/signup')
 def signUp(info : auth.UserInfo):
     #TODO check if the username already exists
