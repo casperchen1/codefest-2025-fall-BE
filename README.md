@@ -3,12 +3,12 @@ The backend server for codefest-fall.
 
 # APIs
 ## /api/health (GET)
-purpose:
+**purpose:**
 check the status of the server
 
-Authorization: false
+**Authorization:** false
 
-repsonse example:
+**repsonse example:**
 ```json
 {
     "status": "operating",
@@ -17,12 +17,12 @@ repsonse example:
 ```
 
 ## /api/dataset (GET)
-purpose:
+**purpose:**
 return all of the sports facility
 
-Authorization: false
+**Authorization:** false
 
-response example:
+**response example:**
 ```json
 {
     "data": [
@@ -47,12 +47,12 @@ response example:
 ```
 
 ## /api/pressence (POST)
-purpose:
+**purpose:**
 send the user location to the server, and return the nearest facility around.
-increase the points of the user if he's within the `MAX_DISTANCE`
-inRange is true if the user is can obtain points
+increase the points of the user if he's within the `MAX_DISTANCE`.
+inRange is true if the user can obtain points
 
-body:
+**body:**
 ```json
 {
   "user_id": "string",
@@ -62,9 +62,9 @@ body:
 }
 ```
 
-Authorization: true
+**Authorization:** true
 
-response example:
+**response example:**
 ```json
 {
     "status": "success",
@@ -80,12 +80,12 @@ response example:
 ```
 
 ## /api/points/me (GET)
-purpose:
+**purpose:**
 get the points of the user
 
-Autherization: true
+**Autherization:** true
 
-response example:
+**response example:**
 ```json
 {
     "user": "test",
@@ -94,10 +94,10 @@ response example:
 ```
 
 ## /api/purchase (POST)
-purpose:
+**purpose:**
 send purchase request to the server
 
-body:
+**body:**
 ```json
 {
     "item_id" : "water",
@@ -107,18 +107,20 @@ body:
 }
 ```
 
-Autherization: true
+**Autherization:** true
 
-response example:
+**response example:**
 ```json
-{ 'message' : 'Purchase success' }
+{
+    "message" : "Purchase success"
+}
 ```
 
 ## /auth/signup (POST)
-purpose:
+**purpose:**
 create an account, throw errors if the username already exists
 
-body:
+**body:**
 ```json
 {
     "username" : "test",
@@ -126,18 +128,20 @@ body:
 }
 ```
 
-Autherization: false
+**Autherization:** false
 
-response example:
+**response example:**
 ```json
-{ 'message' : 'Created successfully' }
+{
+    "message" : "Created successfully"
+}
 ```
 
 ## /auth/login (POST)
-purpose:
+**purpose:**
 returns the JWT payload if successfully logged in
 
-body:
+**body:**
 ```json
 {
     "username" : "test",
@@ -145,9 +149,9 @@ body:
 }
 ```
 
-Autherization: false
+**Autherization:** false
 
-response example:
+**response example:**
 ```json
 {
     "access_token": "<JWT token>"
