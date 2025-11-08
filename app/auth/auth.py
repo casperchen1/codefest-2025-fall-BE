@@ -3,7 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 import os, jwt, uuid
 from datetime import datetime, timedelta, timezone
-
+from app.dataBase import connect
 #Authentication
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret")  
 JWT_ALG = "HS256"                                   
@@ -16,9 +16,10 @@ class UserInfo(BaseModel):
     password : str
     
 def verify_user(username : str, password : str): 
-    #TODO verify usernname with password hash
-    if username == os.getenv("USERNAME") and password == os.getenv("USER_PASSWORD"):
-        return os.getenv("USERNAME")
+    verify = connect.getinfo(connect.connectToDB(), "UserInfo", username)["Password"].iloc[0]
+
+    if verify == password:
+        return username
     return None
 
 def require_user(creds : HTTPAuthorizationCredentials = Depends(security)):

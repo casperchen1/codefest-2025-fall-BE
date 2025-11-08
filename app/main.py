@@ -67,7 +67,7 @@ data = updateData()
 
 @app.get('/api/health')
 def getStatus():
-    return { 'status' : 'operating', 'test' : os.getenv("USERNAME") }
+    return { 'status' : 'operating' }
 
 @app.get('/api/dataset')
 def getData():
@@ -79,6 +79,9 @@ def getNearest(usr : UserLocation, user = Depends(auth.require_user)):
     try:
         result = nearest(data, usr.lng, usr.lat)
         if result['dist_m'] <= MAX_DISTANCE:
+            username = user['sub']
+            up = int(connect.getinfo(connect.connectToDB(), "Points", username)["Points"].iloc[0]) + 1
+            connect.updateData(connect.connectToDB(), "Points", up, username)
             print(f'{user['sub']} requested')
     except:
         return { 'status' : "Internal server error"}
@@ -87,7 +90,7 @@ def getNearest(usr : UserLocation, user = Depends(auth.require_user)):
 
 def getUserPointsData(user = Depends(auth.require_user)):
     #TODO find the points of user via db[user.sub]
-    points = connect.getinfo(connect.connectToDB(), "Points", user['sub'])['Points']
+    points = int(connect.getinfo(connect.connectToDB(), "Points", user['sub'])['Points'].iloc[0])
     return { 'user' : user['sub'], 'points' : points }
     
 @app.get('/api/points/me')
@@ -102,10 +105,10 @@ class PurchaseModel(BaseModel):
 
 @app.post('/api/purchase')
 def purchase(order : PurchaseModel, user_points = Depends(getUserPointsData)):
-    if user_points['points'] >= order['price'] * order['count']:
+    if user_points['points'] >= order.price * order.count:
         #TODO handle purchase
-        remain = user_points['points'] - (order['price'] * order['count'])
-        connect.updateData(connect.connectToDB(), "points", remain, user_points['user'])
+        remain = user_points['points'] - (order.price * order.count)
+        connect.updateData(connect.connectToDB(), "Points", remain, user_points['user'])
         return { 'message' : 'Purchase success' }
     return { 'message' : 'Not enough points' }
 
@@ -114,7 +117,7 @@ def signUp(info : auth.UserInfo):
     #TODO check if the username already exists
     cursor = connect.connectToDB()
     check = connect.getinfo(cursor, "UserInfo", info.username)
-    if not check.notnull():
+    if check.empty:
         connect.insertUser(cursor, info.username, info.password)
         return { 'message' : 'Created successfully' }
     else:
