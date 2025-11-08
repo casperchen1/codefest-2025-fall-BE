@@ -99,6 +99,10 @@ def connectToDB():
 '''
 try:
   cursor = connectToDB()
+  cursor.execute("UPDATE Points SET Points = 10000 WHERE Username = 'aug'")
+  cursor.connection.commit()
+  cursor.execute("SELECT * FROM Points ORDER BY Points DESC")
+  print(cursor.fetchall())
   #deleteTable(cursor, "UserInfo")
   createTable(cursor, "sports_places" ,
   id    =    "INT AUTO_INCREMENT PRIMARY KEY",
@@ -125,7 +129,6 @@ try:
 finally:
     cursor.connection.close()
 '''
-
 '''
 cursor = connectToDB()
 cursor.execute("SHOW PROCESSLIST;")
