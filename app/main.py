@@ -21,33 +21,48 @@ def updateData():
     updated = pd.read_csv('../assets/sports_facility.csv')
     return updated
 
-def haversine(lat1, lon1, lat2, lon2):
-    R = 6371000.0
-    p1, p2 = np.radians(lat1), np.radians(lat2)
-    dphi = np.radians(lat2 - lat1)
-    dlmb = np.radians(lon2 - lon1)
-    a = np.sin(dphi/2)**2 + np.cos(p1)*np.cos(p2)*np.sin(dlmb/2)**2
-    return 2*R*np.arcsin(np.sqrt(a)) 
+def haversine(lng1, lat1, lng2, lat2):
+    R = 6371000.0  # meters
 
-def nearest(facilities_df, user_lat, user_lng):
-    d = haversine(user_lat, user_lng, facilities_df["緯度"], facilities_df["經度"])
+    # convert inputs to numpy arrays for broadcasting
+    lng1 = np.asarray(lng1, dtype=float)
+    lat1 = np.asarray(lat1, dtype=float)
+    lng2 = np.asarray(lng2, dtype=float)
+    lat2 = np.asarray(lat2, dtype=float)
+
+    # convert all to radians
+    phi1 = np.radians(lat1)
+    phi2 = np.radians(lat2)
+    dphi = np.radians(lat2 - lat1)
+    dlmb = np.radians(lng2 - lng1)
+
+    a = np.sin(dphi / 2.0)**2 + np.cos(phi1) * np.cos(phi2) * np.sin(dlmb / 2.0)**2
+    c = 2 * np.arcsin(np.sqrt(a))
+    return R * c
+
+def nearest(facilities_df, user_lng, user_lat):
+    lngs = pd.to_numeric(facilities_df["經度"]).to_numpy()
+    lats = pd.to_numeric(facilities_df["緯度"]).to_numpy()
+
+    d = haversine(user_lng, user_lat, lngs, lats)
     i = int(np.argmin(d))
     row = facilities_df.iloc[i]
     return {"name": row["場地"], 
             "type": row["類別"], 
             "lng" : row["經度"], 
             "lat" : row["緯度"] , 
-            "dist_m": float(d.iloc[i])}
+            "dist_m": float(d[i])}
 
 data = updateData()
 
 @app.get('/api/health')
 def getStatus():
-    return { 'status' : 'operating', 'test' : os.getenv("USERNAME") }
+    return { 'status' : 'operating' }
 
 @app.get('/api/dataset')
 def getData():
     return { 'data' : data }
+
 
 @app.post('/api/pressence')
 def getNearest(usr : UserLocation):
@@ -57,7 +72,6 @@ def getNearest(usr : UserLocation):
         return { 'status' : "Internal server error"}
     
     return { "status" : "success", 'data' : result }
-
 
 #Authentication
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret")  
@@ -92,3 +106,4 @@ def login(req : UserInfo):
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     return make_access_token(sub = user_id)
+
