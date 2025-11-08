@@ -202,6 +202,7 @@ def signUp(info : auth.UserInfo):
         check = connect.getUserInfo(cursor, "UserInfo", info.username)
         if check.empty:
             connect.insertUser(cursor, info.username, info.password)
+            print(f"new user {info.username} is created")
             return { 'message' : 'Created successfully' }
         raise HTTPException(status_code = 400, detail = "Username already exists")
     except HTTPException as e:
