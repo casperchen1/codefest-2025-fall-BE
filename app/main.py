@@ -28,7 +28,7 @@ class UserLocation(BaseModel):
 
 def updateData():
     cursor = connect.connectToDB()
-    updated = connect.getinfo(cursor, "sports_places")
+    updated = connect.getAllInfo(cursor, "sports_places")
     return updated
 
 def haversine(lng1, lat1, lng2, lat2):
@@ -87,7 +87,8 @@ def getNearest(usr : UserLocation, user = Depends(auth.require_user)):
 
 def getUserPointsData(user = Depends(auth.require_user)):
     #TODO find the points of user via db[user.sub]
-    return { 'user' : user['sub'], 'points' : 0 }
+    points = connect.getinfo(connect.connectToDB(), "Points", user['sub'])['Points']
+    return { 'user' : user['sub'], 'points' : points }
     
 @app.get('/api/points/me')
 def getPoints(user_points = Depends(getUserPointsData)):
@@ -103,13 +104,21 @@ class PurchaseModel(BaseModel):
 def purchase(order : PurchaseModel, user_points = Depends(getUserPointsData)):
     if user_points['points'] >= order['price'] * order['count']:
         #TODO handle purchase
+        remain = user_points['points'] - (order['price'] * order['count'])
+        connect.updateData(connect.connectToDB(), "points", remain, user_points['user'])
         return { 'message' : 'Purchase success' }
     return { 'message' : 'Not enough points' }
 
 @app.post('/auth/signup')
 def signUp(info : auth.UserInfo):
     #TODO check if the username already exists
-    return { 'message' : 'Created successfully' }
+    cursor = connect.connectToDB()
+    check = connect.getinfo(cursor, "UserInfo", info.username)
+    if not check.notnull():
+        connect.insertUser(cursor, info.username, info.password)
+        return { 'message' : 'Created successfully' }
+    else:
+        raise HTTPException(status_code = 400, detail = "Username already exists")
 
 @app.post('/auth/login')
 def login(req : auth.UserInfo):
