@@ -21,7 +21,7 @@ app.add_middleware(
 
 #API
 class UserLocation(BaseModel):
-    userid : str
+    user_id : str
     lng : float
     lat : float
     timestamp : str
@@ -73,7 +73,7 @@ def getStatus():
 
 @app.get('/api/dataset')
 def getData():
-     return { 'data' : data.to_dict(orient="records") }
+    return { 'data' : data.to_dict(orient="records") }
 
 MAX_DISTANCE = 25
 @app.post('/api/pressence')
@@ -87,11 +87,21 @@ def getNearest(usr : UserLocation, user = Depends(auth.require_user)):
         return { 'status' : "Internal server error"}
     
     return { "status" : "success", 'data' : result }
-
+    
 @app.get('/api/points/me')
 def getPoints(user = Depends(auth.require_user)):
     #TODO find the points of user via db[user.sub]
     return { 'user' : user }
+
+class PurchaseModel(BaseModel):
+    item_id : str
+    count : int
+    timestamp : str
+
+'''
+@app.post('/api/purchase')
+def purchase(order : PurchaseModel, user = Depends(auth.require_user)):
+'''
 
 @app.post('/auth/login')
 def login(req : auth.UserInfo):
