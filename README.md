@@ -50,6 +50,7 @@ response example:
 purpose:
 send the user location to the server, and return the nearest facility around.
 increase the points of the user if he's within the `MAX_DISTANCE`
+inRange is true if the user is can obtain points
 
 body:
 ```json
@@ -67,6 +68,7 @@ response example:
 ```json
 {
     "status": "success",
+    "inRange" : true
     "data": {
         "name": "大湖山莊成功社區",
         "type": "籃球場",
