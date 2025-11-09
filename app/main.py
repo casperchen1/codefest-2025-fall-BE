@@ -81,7 +81,7 @@ def getStatus():
 def getData():
     return { 'data' : data.to_dict(orient="records") }
 
-MAX_DISTANCE = 25
+MAX_DISTANCE = 30
 MAX_CACHE_RANGE = 20
 USER_CACHE = {} #{ 'user_id' : { 'lng' :, 'lat' :, 'data' :, 'ts' :, 'inRange': } }
 
@@ -191,9 +191,11 @@ def getAllScores():
     try:
         cursor.execute("SELECT * FROM Points ORDER BY Points DESC")
         results = cursor.fetchall()
-        return { 'data' : results.to_dict(orient="records")}
+        return { 'data' : results }
     except:
         raise HTTPException(status_code = 500, detail = 'Internal Server Error')
+    finally:
+        cursor.close()
 
 @app.post('/auth/signup')
 def signUp(info : auth.UserInfo):
