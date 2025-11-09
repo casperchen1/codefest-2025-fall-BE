@@ -81,7 +81,7 @@ def getStatus():
 def getData():
     return { 'data' : data.to_dict(orient="records") }
 
-MAX_DISTANCE = 30
+MAX_DISTANCE = 90
 MAX_CACHE_RANGE = 20
 USER_CACHE = {} #{ 'user_id' : { 'lng' :, 'lat' :, 'data' :, 'ts' :, 'inRange': } }
 
