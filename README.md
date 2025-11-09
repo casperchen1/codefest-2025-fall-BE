@@ -160,4 +160,51 @@ returns the JWT payload if successfully logged in
 }
 ```
 
+## /api/merch (GET)
+**purpose:**
+get all merchs
 
+Authentication: false
+
+**response example:**
+```json
+{
+  "data": [
+    {
+      "id": 2,
+      "productName": "星巴克飲品券",
+      "price": 300,
+      "pictureURL": "assets/image1.png",
+      "tag": "food"
+    },
+    {
+      "id": 3,
+      "productName": "高鐵車票折扣券",
+      "price": 1200,
+      "pictureURL": "assets/image2.png",
+      "tag": "travel"
+    }, ...
+}
+```
+
+## /api/purchase (POST)
+**purpose:**
+request for purchasing item
+
+**body:**
+```json
+{
+    "item_id" : 2,
+    "count" : 1,
+    "timestamp" : "2025/11/08"
+}
+```
+
+**Authentication:** true
+
+**response example:**
+```json
+{
+    "message": "Purchase success"
+}
+```
